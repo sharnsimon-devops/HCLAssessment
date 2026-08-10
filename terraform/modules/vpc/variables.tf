@@ -36,3 +36,9 @@ variable "public_subnet_cidr" {
   type        = string
   default     = "10.100.0.0/24"
 }
+
+variable "gke_master_cidr" {
+  description = "CIDR block for the GKE control plane."
+  type        = string
+  default     = "172.16.0.16/28"
+}
