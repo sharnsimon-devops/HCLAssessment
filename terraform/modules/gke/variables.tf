@@ -37,3 +37,8 @@ variable "gke_master_cidr" {
   description = "CIDR block for the GKE control plane"
   type        = string
 }
+
+variable "gke_node_sa_email" {
+  description = "Email of the least-privilege GKE node service account"
+  type        = string
+}
