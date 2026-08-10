@@ -15,3 +15,9 @@ variable "environment" {
   type        = string
   default     = "dev"
 }
+
+variable "gke_master_cidr" {
+  description = "CIDR block for the GKE control plane. Shared by the vpc module (firewall rule source range) and the gke module (master_ipv4_cidr_block) so both always match."
+  type        = string
+  default     = "172.16.0.16/28"
+}
