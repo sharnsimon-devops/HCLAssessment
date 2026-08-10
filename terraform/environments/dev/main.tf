@@ -27,4 +27,39 @@ module "gke" {
   pods_range_name           = module.vpc.pods_range_name
   services_range_name       = module.vpc.services_range_name
   gke_master_cidr           = var.gke_master_cidr
+  gke_node_sa_email         = module.iam_kms.gke_node_sa_email
+}
+
+module "cloud_armor" {
+  source = "../../modules/cloud-armor"
+
+  project_id  = var.project_id
+  environment = var.environment
+}
+
+module "api_gateway" {
+  source = "../../modules/api-gateway"
+
+  project_id  = var.project_id
+  region      = var.region
+  environment = var.environment
+}
+
+module "binauthz" {
+  source = "../../modules/binauthz"
+
+  project_id                = var.project_id
+  environment                = var.environment
+  attestor_signing_key_id    = module.iam_kms.attestor_signing_key_id
+}
+
+module "load_balancer" {
+  source = "../../modules/load-balancer"
+
+  project_id  = var.project_id
+  region      = var.region
+  environment = var.environment
+
+  gateway_id          = module.api_gateway.gateway_id
+  security_policy_id  = module.cloud_armor.security_policy_id
 }
