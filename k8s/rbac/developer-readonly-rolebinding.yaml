@@ -1,0 +1,18 @@
+# Documented least-privilege example, not wired to a real identity: this
+# binds developer-readonly to a placeholder group name. Kubernetes doesn't
+# validate that the subject exists at creation time, so applying this grants
+# nothing to anyone real until the group name below is replaced with an
+# actual Google Group / IAM principal.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: developer-readonly-binding
+  namespace: dev
+subjects:
+  - kind: Group
+    name: "sample@mail.com"
+    apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: Role
+  name: developer-readonly
+  apiGroup: rbac.authorization.k8s.io
