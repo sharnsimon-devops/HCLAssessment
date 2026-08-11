@@ -28,6 +28,7 @@ module "gke" {
   services_range_name       = module.vpc.services_range_name
   gke_master_cidr           = var.gke_master_cidr
   gke_node_sa_email         = module.iam_kms.gke_node_sa_email
+  master_authorized_cidr    = var.master_authorized_cidr
 }
 
 module "cloud_armor" {
