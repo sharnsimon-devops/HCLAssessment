@@ -47,3 +47,8 @@ variable "gke_node_sa_email" {
   description = "Email of the least-privilege GKE node service account"
   type        = string
 }
+
+variable "artifact_registry_kms_key_id" {
+  description = "KMS key ID used to encrypt the Artifact Registry repository (CMEK)"
+  type        = string
+}

@@ -17,3 +17,8 @@ output "attestor_signing_key_version" {
   description = "Resource name of the signing key's first version, used when creating attestation"
   value       = "${google_kms_crypto_key.attestor_signing_key.id}/cryptoKeyVersions/1"
 }
+
+output "artifact_registry_kms_key_id" {
+  description = "ID of the CMEK key used to encrypt the Artifact Registry repository"
+  value       = google_kms_crypto_key.artifact_registry_key.id
+}

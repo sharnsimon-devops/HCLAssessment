@@ -39,6 +39,19 @@ resource "google_container_cluster" "primary" {
     channel = "REGULAR"
   }
 
+  enable_intranode_visibility = true
+
+  master_auth {
+    client_certificate_config {
+      issue_client_certificate = false
+    }
+  }
+
+  resource_labels = {
+    environment = var.environment
+    managed-by  = "terraform"
+  }
+
   # Node pool managed separately - see node_pool.tf
   remove_default_node_pool = true
   initial_node_count       = 1
