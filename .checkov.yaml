@@ -1,0 +1,13 @@
+# Checks intentionally accepted as documented limitations, not gaps to fix.
+# See terraform/modules/gke/cluster.tf and the DevSecOps pipeline README
+# (Phase 12) for the rationale behind each.
+#
+# CKV_GCP_65: Manage Kubernetes RBAC users with Google Groups for GKE
+#   No Cloud Identity/Workspace security group exists in this project.
+# CKV_GCP_69: Ensure the GKE Metadata Server is Enabled
+#   False positive - workload_metadata_config is set to GKE_METADATA on the
+#   separately-managed node pool (node_pool.tf), which this check does not
+#   inspect since it only looks at node config inline on google_container_cluster.
+skip-check:
+  - CKV_GCP_65
+  - CKV_GCP_69
