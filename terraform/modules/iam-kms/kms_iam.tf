@@ -14,3 +14,21 @@ resource "google_project_iam_member" "github_deployer_container_analysis" {
   role    = "roles/containeranalysis.notes.editor"
   member  = "serviceAccount:${var.github_deployer_sa_email}"
 }
+
+# Confirmed via a full audit (2026-08-11) of github-deployer's granted roles
+# against every resource type this Terraform config manages - Binary
+# Authorization was the one genuine gap, no roles/binaryauthorization.* was
+# granted at all. Everything else (compute.admin, container.admin,
+# artifactregistry.admin, apigateway.admin, cloudkms.admin, etc.) already
+# covers its respective module.
+resource "google_project_iam_member" "github_deployer_binauthz_attestors" {
+  project = var.project_id
+  role    = "roles/binaryauthorization.attestorsEditor"
+  member  = "serviceAccount:${var.github_deployer_sa_email}"
+}
+
+resource "google_project_iam_member" "github_deployer_binauthz_policy" {
+  project = var.project_id
+  role    = "roles/binaryauthorization.policyEditor"
+  member  = "serviceAccount:${var.github_deployer_sa_email}"
+}
