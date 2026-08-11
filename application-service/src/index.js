@@ -30,7 +30,7 @@ const express = require('express');
         appointments: appointments 
       });
     });
-    
+    console.log("123");
     app.get('/appointments/:id', (req, res) => {
       const appointment = appointments.find(a => a.id === req.params.id);
       if (appointment) {

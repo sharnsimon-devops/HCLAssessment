@@ -179,7 +179,7 @@ jobs:
 
   order-service:
     name: Build, push, and deploy order-service
-    needs: detect-changes
+    needs: [detect-changes, sonar-scan]
     if: needs.detect-changes.outputs.order-service == 'true'
     runs-on: ubuntu-latest
     permissions:
@@ -259,7 +259,7 @@ jobs:
 
   application-service:
     name: Build, push, and deploy application-service
-    needs: detect-changes
+    needs: [detect-changes, sonar-scan]
     if: needs.detect-changes.outputs.application-service == 'true'
     runs-on: ubuntu-latest
     permissions:
@@ -339,7 +339,7 @@ jobs:
 
   patient-service:
     name: Build, push, and deploy patient-service
-    needs: detect-changes
+    needs: [detect-changes, sonar-scan]
     if: needs.detect-changes.outputs.patient-service == 'true'
     runs-on: ubuntu-latest
     permissions:
