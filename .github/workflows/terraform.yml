@@ -29,6 +29,17 @@ jobs:
           directory: .
           framework: terraform,kubernetes
           soft_fail: false
+          # CKV_GCP_65 (Google Groups RBAC for GKE): no Cloud Identity/Workspace
+          # security group exists in this project - documented Phase 12 limitation.
+          # CKV_GCP_69 (GKE Metadata Server): false positive against this project's
+          # separately-managed node pool (node_pool.tf already sets
+          # workload_metadata_config = GKE_METADATA; this check only inspects node
+          # config inline on google_container_cluster, which we don't use since
+          # remove_default_node_pool = true).
+          # Inline #checkov:skip comments don't work for these two (both are
+          # graph-based checks - a confirmed Checkov limitation where inline
+          # suppression is silently ignored), so skipped here at the CLI level instead.
+          skip_check: CKV_GCP_65,CKV_GCP_69
 
   trivy-config:
     name: Trivy config scan (replaces deprecated tfsec - checks migrated into Trivy)
