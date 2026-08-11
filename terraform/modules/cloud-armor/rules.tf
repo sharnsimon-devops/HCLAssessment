@@ -11,17 +11,6 @@ resource "google_compute_security_policy_rule" "sqli" {
     }
   }
 
-  # Known limitation (2026-08-10, confirmed via Cloud Armor VERBOSE logs):
-  # owasp-crs-v030301-id942260-sqli false-positives on ordinary JSON request
-  # bodies (a quoted key followed by a colon, e.g. "description":, matches
-  # this rule's SQLi pattern). Cloud Armor's preconfigured_waf_config
-  # exclusion mechanism can only scope to request_header/request_cookie/
-  # request_query_param/request_uri - there is no way to scope an exclusion
-  # to POST body content, so this cannot be fixed without either accepting
-  # the false positive (chosen) or dropping body inspection for SQLi
-  # entirely via a custom CEL expression (would reduce real coverage).
-  # Accepted trade-off: real SQL injection attempts are still blocked; some
-  # legitimate JSON payloads may occasionally get a false-positive 403.
 }
 
 resource "google_compute_security_policy_rule" "xss" {

@@ -1,0 +1,233 @@
+name: Build and Push
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'order-service/**'
+      - 'application-service/**'
+      - 'patient-service/**'
+      - '.github/workflows/build-and-push.yml'
+
+env:
+  PROJECT_ID: hcl-assessment
+  REGION: europe-west2
+  REPO: dev-docker-repo
+  KEYRING: dev-binauthz-keyring
+  SIGNING_KEY: dev-attestor-signing-key
+
+permissions:
+  contents: read
+
+jobs:
+  detect-changes:
+    name: Detect changed services
+    runs-on: ubuntu-latest
+    outputs:
+      order-service: ${{ steps.filter.outputs.order-service }}
+      application-service: ${{ steps.filter.outputs.application-service }}
+      patient-service: ${{ steps.filter.outputs.patient-service }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            order-service:
+              - 'order-service/**'
+            application-service:
+              - 'application-service/**'
+            patient-service:
+              - 'patient-service/**'
+
+  order-service:
+    name: Build order-service
+    needs: detect-changes
+    if: needs.detect-changes.outputs.order-service == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_SERVICE_ACCOUNT }}
+
+      - run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
+
+      - name: Build image
+        run: docker build -t ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO }}/order-service:${{ github.sha }} order-service
+
+      - name: Trivy image scan
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: image
+          image-ref: ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO }}/order-service:${{ github.sha }}
+          severity: CRITICAL,HIGH
+          exit-code: 1
+
+      - name: Push image
+        run: docker push ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO }}/order-service:${{ github.sha }}
+
+      - name: Get digest
+        id: digest
+        run: |
+          DIGEST=$(docker inspect --format='{{index .RepoDigests 0}}' ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO }}/order-service:${{ github.sha }})
+          echo "digest=$DIGEST" >> "$GITHUB_OUTPUT"
+
+      - name: Sign attestation (build attestor)
+        run: |
+          gcloud beta container binauthz attestations sign-and-create \
+            --project=${{ env.PROJECT_ID }} \
+            --artifact-url=${{ steps.digest.outputs.digest }} \
+            --attestor=dev-build-attestor \
+            --attestor-project=${{ env.PROJECT_ID }} \
+            --keyversion-project=${{ env.PROJECT_ID }} \
+            --keyversion-location=${{ env.REGION }} \
+            --keyversion-keyring=${{ env.KEYRING }} \
+            --keyversion-key=${{ env.SIGNING_KEY }} \
+            --keyversion=1
+
+      - name: Sign attestation (vulnerability-scan attestor)
+        run: |
+          gcloud beta container binauthz attestations sign-and-create \
+            --project=${{ env.PROJECT_ID }} \
+            --artifact-url=${{ steps.digest.outputs.digest }} \
+            --attestor=dev-vulnerability-scan-attestor \
+            --attestor-project=${{ env.PROJECT_ID }} \
+            --keyversion-project=${{ env.PROJECT_ID }} \
+            --keyversion-location=${{ env.REGION }} \
+            --keyversion-keyring=${{ env.KEYRING }} \
+            --keyversion-key=${{ env.SIGNING_KEY }} \
+            --keyversion=1
+
+  application-service:
+    name: Build application-service
+    needs: detect-changes
+    if: needs.detect-changes.outputs.application-service == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_SERVICE_ACCOUNT }}
+
+      - run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
+
+      - name: Build image
+        run: docker build -t ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO }}/application-service:${{ github.sha }} application-service
+
+      - name: Trivy image scan
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: image
+          image-ref: ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO }}/application-service:${{ github.sha }}
+          severity: CRITICAL,HIGH
+          exit-code: 1
+
+      - name: Push image
+        run: docker push ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO }}/application-service:${{ github.sha }}
+
+      - name: Get digest
+        id: digest
+        run: |
+          DIGEST=$(docker inspect --format='{{index .RepoDigests 0}}' ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO }}/application-service:${{ github.sha }})
+          echo "digest=$DIGEST" >> "$GITHUB_OUTPUT"
+
+      - name: Sign attestation (build attestor)
+        run: |
+          gcloud beta container binauthz attestations sign-and-create \
+            --project=${{ env.PROJECT_ID }} \
+            --artifact-url=${{ steps.digest.outputs.digest }} \
+            --attestor=dev-build-attestor \
+            --attestor-project=${{ env.PROJECT_ID }} \
+            --keyversion-project=${{ env.PROJECT_ID }} \
+            --keyversion-location=${{ env.REGION }} \
+            --keyversion-keyring=${{ env.KEYRING }} \
+            --keyversion-key=${{ env.SIGNING_KEY }} \
+            --keyversion=1
+
+      - name: Sign attestation (vulnerability-scan attestor)
+        run: |
+          gcloud beta container binauthz attestations sign-and-create \
+            --project=${{ env.PROJECT_ID }} \
+            --artifact-url=${{ steps.digest.outputs.digest }} \
+            --attestor=dev-vulnerability-scan-attestor \
+            --attestor-project=${{ env.PROJECT_ID }} \
+            --keyversion-project=${{ env.PROJECT_ID }} \
+            --keyversion-location=${{ env.REGION }} \
+            --keyversion-keyring=${{ env.KEYRING }} \
+            --keyversion-key=${{ env.SIGNING_KEY }} \
+            --keyversion=1
+
+  patient-service:
+    name: Build patient-service
+    needs: detect-changes
+    if: needs.detect-changes.outputs.patient-service == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_SERVICE_ACCOUNT }}
+
+      - run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
+
+      - name: Build image
+        run: docker build -t ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO }}/patient-service:${{ github.sha }} patient-service
+
+      - name: Trivy image scan
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: image
+          image-ref: ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO }}/patient-service:${{ github.sha }}
+          severity: CRITICAL,HIGH
+          exit-code: 1
+
+      - name: Push image
+        run: docker push ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO }}/patient-service:${{ github.sha }}
+
+      - name: Get digest
+        id: digest
+        run: |
+          DIGEST=$(docker inspect --format='{{index .RepoDigests 0}}' ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO }}/patient-service:${{ github.sha }})
+          echo "digest=$DIGEST" >> "$GITHUB_OUTPUT"
+
+      - name: Sign attestation (build attestor)
+        run: |
+          gcloud beta container binauthz attestations sign-and-create \
+            --project=${{ env.PROJECT_ID }} \
+            --artifact-url=${{ steps.digest.outputs.digest }} \
+            --attestor=dev-build-attestor \
+            --attestor-project=${{ env.PROJECT_ID }} \
+            --keyversion-project=${{ env.PROJECT_ID }} \
+            --keyversion-location=${{ env.REGION }} \
+            --keyversion-keyring=${{ env.KEYRING }} \
+            --keyversion-key=${{ env.SIGNING_KEY }} \
+            --keyversion=1
+
+      - name: Sign attestation (vulnerability-scan attestor)
+        run: |
+          gcloud beta container binauthz attestations sign-and-create \
+            --project=${{ env.PROJECT_ID }} \
+            --artifact-url=${{ steps.digest.outputs.digest }} \
+            --attestor=dev-vulnerability-scan-attestor \
+            --attestor-project=${{ env.PROJECT_ID }} \
+            --keyversion-project=${{ env.PROJECT_ID }} \
+            --keyversion-location=${{ env.REGION }} \
+            --keyversion-keyring=${{ env.KEYRING }} \
+            --keyversion-key=${{ env.SIGNING_KEY }} \
+            --keyversion=1

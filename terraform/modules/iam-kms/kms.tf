@@ -18,4 +18,3 @@ resource "google_kms_crypto_key" "attestor_signing_key" {
     prevent_destroy = true
   }
 }
-
