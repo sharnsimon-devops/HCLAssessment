@@ -25,7 +25,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: order-service
-          image: europe-west2-docker.pkg.dev/hcl-assessment/dev-docker-repo/order-service@sha256:2e87216589fa0f4f20fe33e47a199ccd8be3bb51470234f9b3162747ec55423d
+          image: europe-west2-docker.pkg.dev/hcl-assessment/dev-docker-repo/order-service@sha256:574c068975edabf889d960e763bd87f71879b4da2708d7e56dc9858d80ce2aa6
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true

@@ -25,7 +25,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: application-service
-          image: europe-west2-docker.pkg.dev/hcl-assessment/dev-docker-repo/application-service@sha256:ca3f3a4014221ddb61462fe9201256958f65ca13c726c44cee28dd2feee3d071
+          image: europe-west2-docker.pkg.dev/hcl-assessment/dev-docker-repo/application-service@sha256:7a8971e5ac56d0442181e5b745556d921ecbdf7ae1cae12fd11c15046cd08a93
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
