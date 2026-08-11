@@ -85,11 +85,11 @@ resource "google_compute_security_policy_rule" "java_attacks" {
   security_policy = google_compute_security_policy.waf.name
   action          = "deny(403)"
   priority        = 1005
-  description     = "Block Java-specific attacks, including Log4Shell (CVE-2021-44228)"
+  description     = "Block known-CVE exploit attempts, including Log4Shell (CVE-2021-44228)"
 
   match {
     expr {
-      expression = "evaluatePreconfiguredExpr('java-v33-stable')"
+      expression = "evaluatePreconfiguredExpr('cve-canary')"
     }
   }
 }

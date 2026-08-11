@@ -5,9 +5,10 @@ resource "google_kms_key_ring" "artifact_registry" {
 }
 
 resource "google_kms_crypto_key" "artifact_registry_key" {
-  name     = "${var.environment}-artifact-registry-key"
-  key_ring = google_kms_key_ring.artifact_registry.id
-  purpose  = "ENCRYPT_DECRYPT"
+  name            = "${var.environment}-artifact-registry-key"
+  key_ring        = google_kms_key_ring.artifact_registry.id
+  purpose         = "ENCRYPT_DECRYPT"
+  rotation_period = "7776000s" # 90 days
 
   lifecycle {
     prevent_destroy = true
