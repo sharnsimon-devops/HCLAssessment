@@ -6,7 +6,7 @@ COPY src ./src
 RUN mvn package -DskipTests -B
 
 FROM eclipse-temurin:17-jre-alpine
-RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+RUN addgroup -S -g 10001 appgroup && adduser -S -u 10001 -G appgroup appuser
 WORKDIR /app
 COPY --from=build /app/target/*.jar app.jar
 USER appuser

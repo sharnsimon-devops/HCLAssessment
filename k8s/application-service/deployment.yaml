@@ -16,17 +16,19 @@ spec:
         app: application-service
     spec:
       serviceAccountName: application-service
+      automountServiceAccountToken: false
       securityContext:
         runAsNonRoot: true
-        runAsUser: 100
-        runAsGroup: 101
+        runAsUser: 10001
+        runAsGroup: 10001
         seccompProfile:
           type: RuntimeDefault
       containers:
         - name: application-service
-          image: europe-west2-docker.pkg.dev/hcl-assessment/dev-docker-repo/application-service@sha256:557131b4730990b86dd7a718f05d28d4ec4834c44ccb451abc4b32057018bcce
+          image: europe-west2-docker.pkg.dev/hcl-assessment/dev-docker-repo/application-service@sha256:1b6625b6afa5ef606ff1d4ea41fa422d73463ae21056ffe97b336be7d9408f6c
           securityContext:
             allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
             capabilities:
               drop:
                 - ALL
@@ -35,6 +37,9 @@ spec:
           env:
             - name: PORT
               value: "3001"
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
           resources:
             requests:
               cpu: 50m
@@ -54,3 +59,6 @@ spec:
               port: 3001
             initialDelaySeconds: 10
             periodSeconds: 15
+      volumes:
+        - name: tmp
+          emptyDir: {}

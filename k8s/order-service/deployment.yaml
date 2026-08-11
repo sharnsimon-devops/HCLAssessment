@@ -16,22 +16,27 @@ spec:
         app: order-service
     spec:
       serviceAccountName: order-service
+      automountServiceAccountToken: false
       securityContext:
         runAsNonRoot: true
-        runAsUser: 100
-        runAsGroup: 101
+        runAsUser: 10001
+        runAsGroup: 10001
         seccompProfile:
           type: RuntimeDefault
       containers:
         - name: order-service
-          image: europe-west2-docker.pkg.dev/hcl-assessment/dev-docker-repo/order-service@sha256:5823b0db186d14584a6920b1b4c4433424036be39af89926060c1632b55b0ad3
+          image: europe-west2-docker.pkg.dev/hcl-assessment/dev-docker-repo/order-service@sha256:31abdaa79f6e939947a264095cd8dcd36fec74119b90bec8bcf1899ef185dc8b
           securityContext:
             allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
             capabilities:
               drop:
                 - ALL
           ports:
             - containerPort: 8080
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
           resources:
             requests:
               cpu: 100m
@@ -51,3 +56,6 @@ spec:
               port: 8080
             initialDelaySeconds: 60
             periodSeconds: 15
+      volumes:
+        - name: tmp
+          emptyDir: {}
