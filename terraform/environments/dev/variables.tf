@@ -27,4 +27,3 @@ variable "master_authorized_cidr" {
   type        = string
   default     = "148.252.145.227/32"
 }
-

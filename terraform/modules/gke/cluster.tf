@@ -52,13 +52,9 @@ resource "google_container_cluster" "primary" {
     managed-by  = "terraform"
   }
 
-  # Node pool managed separately - see node_pool.tf
   remove_default_node_pool = true
   initial_node_count       = 1
 
-  # Phase 10: enforcement enabled now that a normal deploy has been proven
-  # to work (Phase 8) and both attestors have a valid signed attestation
-  # for order-service:v1 ready to prove the enforce/block behavior.
   binary_authorization {
     evaluation_mode = "PROJECT_SINGLETON_POLICY_ENFORCE"
   }

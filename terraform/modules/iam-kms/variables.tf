@@ -18,4 +18,3 @@ variable "github_deployer_sa_email" {
   type        = string
   default     = "github-deployer@hcl-assessment.iam.gserviceaccount.com"
 }
-
