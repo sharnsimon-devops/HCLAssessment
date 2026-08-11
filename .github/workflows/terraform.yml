@@ -8,6 +8,7 @@ on:
       - 'k8s/**'
       - '.github/workflows/terraform.yml'
       - '.checkov.yaml'
+      - '.trivyignore'
   push:
     branches: [master]
     paths:
@@ -15,6 +16,7 @@ on:
       - 'k8s/**'
       - '.github/workflows/terraform.yml'
       - '.checkov.yaml'
+      - '.trivyignore'
 
 permissions:
   contents: read
@@ -64,6 +66,12 @@ jobs:
           scan-ref: terraform/
           severity: CRITICAL,HIGH
           exit-code: 1
+          # GCP-0007 (Service account granted a privileged role): false positive -
+          # Trivy's isRolePrivileged() flags any role ending in "admin", which
+          # catches roles/gkehub.gatewayAdmin (iam-kms/kms_iam.tf) purely because
+          # of the name. It's Google's documented, required role for Connect
+          # Gateway kubectl access, not a broad admin grant. See .trivyignore.
+          trivyignores: .trivyignore
 
   plan:
     name: Terraform Plan

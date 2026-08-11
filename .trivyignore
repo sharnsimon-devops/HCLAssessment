@@ -1,0 +1,10 @@
+# GCP-0007: Service account is granted a privileged role
+#   False positive - Trivy's isRolePrivileged() flags roles/owner, roles/editor,
+#   or ANY role ending in "admin" (case-insensitive), regardless of actual scope.
+#   roles/gkehub.gatewayAdmin (granted to github-deployer in iam-kms/kms_iam.tf)
+#   only grants Connect Gateway access (kubectl through the fleet gateway), not
+#   general GCP administrative capability - it is Google's documented, required
+#   role for this purpose and no lesser predefined role exists that still permits
+#   kubectl apply through the gateway. Same class of false positive as Checkov's
+#   CKV_GCP_42 on the *.editor-suffixed roles granted to the same service account.
+AVD-GCP-0007
