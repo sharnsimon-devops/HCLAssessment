@@ -1,3 +1,5 @@
+#checkov:skip=CKV_GCP_65:No Cloud Identity/Workspace security group exists in this project to bind GKE RBAC to; requires a real org-level group, documented as a Phase 12 limitation
+#checkov:skip=CKV_GCP_69:workload_metadata_config is set to GKE_METADATA on the separately-managed node pool (node_pool.tf) - this check only inspects node config inline on this resource, a false positive for our remove_default_node_pool architecture
 resource "google_container_cluster" "primary" {
   project  = var.project_id
   name     = "${var.environment}-gke-cluster"
