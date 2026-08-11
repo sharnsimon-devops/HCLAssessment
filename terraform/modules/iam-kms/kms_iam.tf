@@ -27,3 +27,9 @@ resource "google_project_iam_member" "github_deployer_notes_attacher" {
   role    = "roles/containeranalysis.notes.attacher"
   member  = "serviceAccount:${var.github_deployer_sa_email}"
 }
+
+resource "google_project_iam_member" "github_deployer_occurrences_editor" {
+  project = var.project_id
+  role    = "roles/containeranalysis.occurrences.editor"
+  member  = "serviceAccount:${var.github_deployer_sa_email}"
+}
