@@ -1,13 +1,28 @@
-name: Build, Push, and Deploy
+name: DevSecOps Pipeline
 
 on:
-  push:
+  pull_request:
     branches: [master]
     paths:
+      - 'terraform/**'
+      - 'k8s/**'
+      - '.checkov.yaml'
+      - '.trivyignore'
       - 'order-service/**'
       - 'application-service/**'
       - 'patient-service/**'
-      - '.github/workflows/build-and-push.yml'
+      - '.github/workflows/pipeline.yml'
+  push:
+    branches: [master]
+    paths:
+      - 'terraform/**'
+      - 'k8s/**'
+      - '.checkov.yaml'
+      - '.trivyignore'
+      - 'order-service/**'
+      - 'application-service/**'
+      - 'patient-service/**'
+      - '.github/workflows/pipeline.yml'
 
 env:
   PROJECT_ID: hcl-assessment
@@ -24,9 +39,10 @@ permissions:
 
 jobs:
   detect-changes:
-    name: Detect changed services
+    name: Detect changed paths
     runs-on: ubuntu-latest
     outputs:
+      terraform: ${{ steps.filter.outputs.terraform }}
       order-service: ${{ steps.filter.outputs.order-service }}
       application-service: ${{ steps.filter.outputs.application-service }}
       patient-service: ${{ steps.filter.outputs.patient-service }}
@@ -36,12 +52,130 @@ jobs:
         id: filter
         with:
           filters: |
+            terraform:
+              - 'terraform/**'
+              - 'k8s/**'
+              - '.checkov.yaml'
+              - '.trivyignore'
             order-service:
               - 'order-service/**'
             application-service:
               - 'application-service/**'
             patient-service:
               - 'patient-service/**'
+
+  checkov:
+    name: Checkov (Terraform + Kubernetes)
+    needs: detect-changes
+    if: needs.detect-changes.outputs.terraform == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run Checkov
+        uses: bridgecrewio/checkov-action@master
+        with:
+          directory: .
+          framework: terraform,kubernetes
+          soft_fail: false
+          skip_check: CKV_GCP_65,CKV_GCP_69,CKV_GCP_42
+
+  trivy-config:
+    name: Trivy config scan (replaces deprecated tfsec - checks migrated into Trivy)
+    needs: detect-changes
+    if: needs.detect-changes.outputs.terraform == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run Trivy config scan
+        uses: aquasecurity/trivy-action@v0.36.0
+        env:
+          TRIVY_IGNOREFILE: .trivyignore
+        with:
+          scan-type: config
+          scan-ref: terraform/
+          severity: CRITICAL,HIGH
+          exit-code: 1
+
+  plan:
+    name: Terraform Plan
+    if: github.event_name == 'pull_request' && needs.detect-changes.outputs.terraform == 'true'
+    needs: [detect-changes, checkov, trivy-config]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_SERVICE_ACCOUNT }}
+
+      - uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        working-directory: terraform/environments/dev
+        run: terraform init -input=false
+
+      - name: Terraform Plan
+        id: plan
+        working-directory: terraform/environments/dev
+        run: terraform plan -input=false -no-color -out=tfplan | tee plan_output.txt
+        continue-on-error: true
+
+      - name: Post plan to PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const plan = fs.readFileSync('terraform/environments/dev/plan_output.txt', 'utf8');
+            const maxLength = 65000;
+            const truncated = plan.length > maxLength
+              ? plan.substring(0, maxLength) + '\n... (truncated)'
+              : plan;
+            const body = `#### Terraform Plan\n<details><summary>Show plan</summary>\n\n\`\`\`\n${truncated}\n\`\`\`\n</details>`;
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body,
+            });
+
+      - name: Fail if plan errored
+        if: steps.plan.outcome == 'failure'
+        run: exit 1
+
+  apply:
+    name: Terraform Apply
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master' && needs.detect-changes.outputs.terraform == 'true'
+    needs: [detect-changes, checkov, trivy-config]
+    runs-on: ubuntu-latest
+    # Requires a one-time manual setup: GitHub repo Settings -> Environments
+    # -> create "production" -> add required reviewers. Without that
+    # protection rule configured, this job runs immediately with no gate.
+    environment: production
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_SERVICE_ACCOUNT }}
+
+      - uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        working-directory: terraform/environments/dev
+        run: terraform init -input=false
+
+      - name: Terraform Apply
+        working-directory: terraform/environments/dev
+        run: terraform apply -input=false -auto-approve
 
   order-service:
     name: Build, push, and deploy order-service
@@ -282,3 +416,74 @@ jobs:
         run: |
           kubectl apply -f k8s/patient-service/deployment.yaml
           kubectl rollout status deployment/patient-service -n ${{ env.NAMESPACE }} --timeout=180s
+
+  sonar-scan:
+    name: SonarQube SAST + Secrets Scan
+    needs: detect-changes
+    if: needs.detect-changes.outputs.order-service == 'true' || needs.detect-changes.outputs.application-service == 'true' || needs.detect-changes.outputs.patient-service == 'true'
+    runs-on: ubuntu-latest
+    services:
+      sonarqube:
+        image: sonarqube:community
+        ports:
+          - 9000:9000
+        options: >-
+          --health-cmd "curl -f http://localhost:9000/api/system/status || exit 1"
+          --health-interval 15s
+          --health-timeout 10s
+          --health-retries 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Wait for SonarQube to be ready
+        run: |
+          for i in $(seq 1 30); do
+            STATUS=$(curl -s http://localhost:9000/api/system/status | grep -o '"status":"[A-Z]*"' | cut -d'"' -f4)
+            if [ "$STATUS" = "UP" ]; then
+              echo "SonarQube is up"
+              break
+            fi
+            echo "Waiting for SonarQube... (status: $STATUS)"
+            sleep 10
+          done
+
+      - name: Generate auth token
+        id: sonar-auth
+        run: |
+          TOKEN=$(curl -s -u admin:admin -X POST "http://localhost:9000/api/user_tokens/generate" -d "name=ci-token" | grep -o '"token":"[^"]*"' | cut -d'"' -f4)
+          echo "::add-mask::$TOKEN"
+          echo "token=$TOKEN" >> "$GITHUB_OUTPUT"
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Compile order-service (for accurate Java analysis)
+        working-directory: order-service
+        run: mvn -B compile -DskipTests
+
+      - name: SonarQube Scan
+        uses: sonarsource/sonarqube-scan-action@master
+        env:
+          SONAR_HOST_URL: http://localhost:9000
+          SONAR_TOKEN: ${{ steps.sonar-auth.outputs.token }}
+        with:
+          args: >
+            -Dsonar.projectKey=hcl-devsecops-pipeline
+            -Dsonar.sources=order-service/src,application-service/src,patient-service/src
+            -Dsonar.java.binaries=order-service/target/classes
+            -Dsonar.exclusions=**/node_modules/**,**/target/**
+
+      - name: Check Quality Gate
+        run: |
+          sleep 10
+          STATUS=$(curl -s -u ${{ steps.sonar-auth.outputs.token }}: "http://localhost:9000/api/qualitygates/project_status?projectKey=hcl-devsecops-pipeline" | grep -o '"status":"[A-Z]*"' | head -1 | cut -d'"' -f4)
+          echo "Quality Gate status: $STATUS"
+          if [ "$STATUS" != "OK" ]; then
+            echo "Quality Gate failed"
+            exit 1
+          fi
