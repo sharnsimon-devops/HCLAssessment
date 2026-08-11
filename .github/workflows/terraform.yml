@@ -38,10 +38,19 @@ jobs:
           # workload_metadata_config = GKE_METADATA; this check only inspects node
           # config inline on google_container_cluster, which we don't use since
           # remove_default_node_pool = true).
-          # Inline #checkov:skip comments don't work for these two (both are
-          # graph-based checks - a confirmed Checkov limitation where inline
-          # suppression is silently ignored), so skipped here at the CLI level instead.
-          skip_check: CKV_GCP_65,CKV_GCP_69
+          # CKV_GCP_42 (Service Account has no Admin privileges): false positive -
+          # this check flags any role matching ".*Admin"/"editor"/"owner", which
+          # catches our narrowly-scoped *.notes.editor / *.attestorsEditor /
+          # *.policyEditor grants (iam-kms/kms_iam.tf) purely because they contain
+          # "Editor" - none are the broad legacy roles/editor primitive role this
+          # check is meant to catch, and no finer-grained predefined GCP role
+          # exists below Editor for any of them.
+          # Inline #checkov:skip comments don't work for these (graph-based checks -
+          # a confirmed Checkov limitation where inline suppression is silently
+          # ignored), so skipped here at the CLI level instead. Also listed in
+          # .checkov.yaml - kept identical in both places since it's unclear which
+          # one takes precedence when they'd otherwise disagree.
+          skip_check: CKV_GCP_65,CKV_GCP_69,CKV_GCP_42
 
   trivy-config:
     name: Trivy config scan (replaces deprecated tfsec - checks migrated into Trivy)
