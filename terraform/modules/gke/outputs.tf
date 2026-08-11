@@ -18,3 +18,8 @@ output "cluster_endpoint" {
   value       = google_container_cluster.primary.endpoint
   sensitive   = true
 }
+
+output "fleet_membership_id" {
+  description = "Fleet membership ID, used by deploy.yml to fetch credentials via Connect Gateway"
+  value       = google_gke_hub_membership.primary.membership_id
+}

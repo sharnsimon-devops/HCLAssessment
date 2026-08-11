@@ -33,3 +33,15 @@ resource "google_project_iam_member" "github_deployer_occurrences_editor" {
   role    = "roles/containeranalysis.occurrences.editor"
   member  = "serviceAccount:${var.github_deployer_sa_email}"
 }
+
+resource "google_project_iam_member" "github_deployer_gateway_admin" {
+  project = var.project_id
+  role    = "roles/gkehub.gatewayAdmin"
+  member  = "serviceAccount:${var.github_deployer_sa_email}"
+}
+
+resource "google_project_iam_member" "github_deployer_gkehub_viewer" {
+  project = var.project_id
+  role    = "roles/gkehub.viewer"
+  member  = "serviceAccount:${var.github_deployer_sa_email}"
+}
