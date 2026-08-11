@@ -16,17 +16,19 @@ spec:
         app: patient-service
     spec:
       serviceAccountName: patient-service
+      automountServiceAccountToken: false
       securityContext:
         runAsNonRoot: true
-        runAsUser: 100
-        runAsGroup: 101
+        runAsUser: 10001
+        runAsGroup: 10001
         seccompProfile:
           type: RuntimeDefault
       containers:
         - name: patient-service
-          image: europe-west2-docker.pkg.dev/hcl-assessment/dev-docker-repo/patient-service@sha256:936d6df8f56c690e69d38c4f47246d40de20640733b4cc15641de3c04ff07175
+          image: europe-west2-docker.pkg.dev/hcl-assessment/dev-docker-repo/patient-service@sha256:6ab365e8f3b48a596ea94ab2379b8ec5768bd261f64a38323b8a50b370c5fb90
           securityContext:
             allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
             capabilities:
               drop:
                 - ALL
@@ -35,6 +37,9 @@ spec:
           env:
             - name: PORT
               value: "3000"
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
           resources:
             requests:
               cpu: 50m
@@ -54,3 +59,6 @@ spec:
               port: 3000
             initialDelaySeconds: 10
             periodSeconds: 15
+      volumes:
+        - name: tmp
+          emptyDir: {}
