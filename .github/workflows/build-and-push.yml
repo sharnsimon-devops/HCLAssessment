@@ -16,7 +16,7 @@ env:
   KEYRING: dev-binauthz-keyring
   SIGNING_KEY: dev-attestor-signing-key
   CLUSTER: dev-gke-cluster
-  FLEET_MEMBERSHIP: dev-gke-membership
+  FLEET_MEMBERSHIP: projects/hcl-assessment/locations/global/memberships/dev-gke-membership
   NAMESPACE: dev
 
 permissions:
