@@ -29,6 +29,7 @@ module "gke" {
   gke_master_cidr           = var.gke_master_cidr
   gke_node_sa_email         = module.iam_kms.gke_node_sa_email
   master_authorized_cidr    = var.master_authorized_cidr
+  artifact_registry_kms_key_id = module.iam_kms.artifact_registry_kms_key_id
 }
 
 module "cloud_armor" {

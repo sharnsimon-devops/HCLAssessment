@@ -25,7 +25,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: patient-service
-          image: europe-west2-docker.pkg.dev/hcl-assessment/dev-docker-repo/patient-service@sha256:6ab365e8f3b48a596ea94ab2379b8ec5768bd261f64a38323b8a50b370c5fb90
+          image: europe-west2-docker.pkg.dev/hcl-assessment/dev-docker-repo/patient-service@sha256:1158703fb7d1731395d82c803f3387adb206e6f9f2b5cef1f7c9e90044ab2bc7
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true

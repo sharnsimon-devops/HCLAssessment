@@ -13,5 +13,9 @@ resource "google_kms_crypto_key" "attestor_signing_key" {
     algorithm        = "EC_SIGN_P256_SHA256"
     protection_level = "SOFTWARE"
   }
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
