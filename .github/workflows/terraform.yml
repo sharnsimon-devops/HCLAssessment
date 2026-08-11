@@ -33,25 +33,6 @@ jobs:
           directory: .
           framework: terraform,kubernetes
           soft_fail: false
-          # CKV_GCP_65 (Google Groups RBAC for GKE): no Cloud Identity/Workspace
-          # security group exists in this project - documented Phase 12 limitation.
-          # CKV_GCP_69 (GKE Metadata Server): false positive against this project's
-          # separately-managed node pool (node_pool.tf already sets
-          # workload_metadata_config = GKE_METADATA; this check only inspects node
-          # config inline on google_container_cluster, which we don't use since
-          # remove_default_node_pool = true).
-          # CKV_GCP_42 (Service Account has no Admin privileges): false positive -
-          # this check flags any role matching ".*Admin"/"editor"/"owner", which
-          # catches our narrowly-scoped *.notes.editor / *.attestorsEditor /
-          # *.policyEditor grants (iam-kms/kms_iam.tf) purely because they contain
-          # "Editor" - none are the broad legacy roles/editor primitive role this
-          # check is meant to catch, and no finer-grained predefined GCP role
-          # exists below Editor for any of them.
-          # Inline #checkov:skip comments don't work for these (graph-based checks -
-          # a confirmed Checkov limitation where inline suppression is silently
-          # ignored), so skipped here at the CLI level instead. Also listed in
-          # .checkov.yaml - kept identical in both places since it's unclear which
-          # one takes precedence when they'd otherwise disagree.
           skip_check: CKV_GCP_65,CKV_GCP_69,CKV_GCP_42
 
   trivy-config:
@@ -62,16 +43,6 @@ jobs:
       - name: Run Trivy config scan
         uses: aquasecurity/trivy-action@v0.36.0
         env:
-          # GCP-0007 (Service account granted a privileged role): false positive -
-          # Trivy's isRolePrivileged() flags any role ending in "admin", which
-          # catches roles/gkehub.gatewayAdmin (iam-kms/kms_iam.tf) purely because
-          # of the name. It's Google's documented, required role for Connect
-          # Gateway kubectl access, not a broad admin grant. See .trivyignore.
-          # Set directly as the env var Trivy itself reads (not the action's
-          # own `trivyignores` input) - that input has multiple open upstream
-          # bugs where it silently doesn't apply (aquasecurity/trivy-action
-          # issues #337, #436, #442), the same class of failure as Checkov's
-          # inline #checkov:skip bug hit earlier in this project.
           TRIVY_IGNOREFILE: .trivyignore
         with:
           scan-type: config
