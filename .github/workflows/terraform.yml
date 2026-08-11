@@ -61,17 +61,23 @@ jobs:
       - uses: actions/checkout@v4
       - name: Run Trivy config scan
         uses: aquasecurity/trivy-action@v0.36.0
-        with:
-          scan-type: config
-          scan-ref: terraform/
-          severity: CRITICAL,HIGH
-          exit-code: 1
+        env:
           # GCP-0007 (Service account granted a privileged role): false positive -
           # Trivy's isRolePrivileged() flags any role ending in "admin", which
           # catches roles/gkehub.gatewayAdmin (iam-kms/kms_iam.tf) purely because
           # of the name. It's Google's documented, required role for Connect
           # Gateway kubectl access, not a broad admin grant. See .trivyignore.
-          trivyignores: .trivyignore
+          # Set directly as the env var Trivy itself reads (not the action's
+          # own `trivyignores` input) - that input has multiple open upstream
+          # bugs where it silently doesn't apply (aquasecurity/trivy-action
+          # issues #337, #436, #442), the same class of failure as Checkov's
+          # inline #checkov:skip bug hit earlier in this project.
+          TRIVY_IGNOREFILE: .trivyignore
+        with:
+          scan-type: config
+          scan-ref: terraform/
+          severity: CRITICAL,HIGH
+          exit-code: 1
 
   plan:
     name: Terraform Plan
