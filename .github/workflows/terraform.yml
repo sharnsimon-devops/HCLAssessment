@@ -7,12 +7,14 @@ on:
       - 'terraform/**'
       - 'k8s/**'
       - '.github/workflows/terraform.yml'
+      - '.checkov.yaml'
   push:
     branches: [master]
     paths:
       - 'terraform/**'
       - 'k8s/**'
       - '.github/workflows/terraform.yml'
+      - '.checkov.yaml'
 
 permissions:
   contents: read
