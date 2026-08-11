@@ -21,3 +21,4 @@ variable "gke_master_cidr" {
   type        = string
   default     = "172.16.0.16/28"
 }
+

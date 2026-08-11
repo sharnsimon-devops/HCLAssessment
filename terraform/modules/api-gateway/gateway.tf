@@ -8,7 +8,7 @@ resource "google_api_gateway_api_config" "api_config" {
   provider      = google-beta
   project       = var.project_id
   api           = google_api_gateway_api.api.api_id
-  api_config_id = "${var.environment}-services-api-config-v1"
+  api_config_id = "${var.environment}-services-api-config-${substr(filesha256("${path.module}/openapi.yaml"), 0, 8)}"
 
   openapi_documents {
     document {

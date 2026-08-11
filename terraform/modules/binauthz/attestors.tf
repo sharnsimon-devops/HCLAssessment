@@ -33,7 +33,13 @@ resource "google_binary_authorization_attestor" "build_attestor" {
     note_reference = google_container_analysis_note.build_note.name
 
     public_keys {
-      id = data.google_kms_crypto_key_version.attestor_key_version.name
+      # Must match the fully-qualified format `gcloud ... sign-and-create`
+      # generates and matches against ("//cloudkms.googleapis.com/v1/...").
+      # The relative form (just "projects/.../cryptoKeyVersions/1") is a
+      # different string to gcloud's exact-match lookup even though it's the
+      # same underlying key - confirmed 2026-08-11 via a "no public key
+      # found" warning when signing against the relative-format id.
+      id = "//cloudkms.googleapis.com/v1/${data.google_kms_crypto_key_version.attestor_key_version.name}"
       pkix_public_key {
         public_key_pem      = data.google_kms_crypto_key_version.attestor_key_version.public_key[0].pem
         signature_algorithm = "ECDSA_P256_SHA256"
@@ -50,7 +56,13 @@ resource "google_binary_authorization_attestor" "vulnerability_scan_attestor" {
     note_reference = google_container_analysis_note.vulnerability_scan_note.name
 
     public_keys {
-      id = data.google_kms_crypto_key_version.attestor_key_version.name
+      # Must match the fully-qualified format `gcloud ... sign-and-create`
+      # generates and matches against ("//cloudkms.googleapis.com/v1/...").
+      # The relative form (just "projects/.../cryptoKeyVersions/1") is a
+      # different string to gcloud's exact-match lookup even though it's the
+      # same underlying key - confirmed 2026-08-11 via a "no public key
+      # found" warning when signing against the relative-format id.
+      id = "//cloudkms.googleapis.com/v1/${data.google_kms_crypto_key_version.attestor_key_version.name}"
       pkix_public_key {
         public_key_pem      = data.google_kms_crypto_key_version.attestor_key_version.public_key[0].pem
         signature_algorithm = "ECDSA_P256_SHA256"

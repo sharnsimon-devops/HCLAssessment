@@ -3,12 +3,13 @@ info:
   title: hcl-assessment-services-api
   description: >
     Routes to order-service, application-service (Appointment Service), and
-    patient-service. Backend addresses below are placeholders - Phase 5 runs
-    before the GKE Ingress (Phase 8) exists, so there is no real address to
-    point at yet. Update x-google-backend.address on each path with the
-    Ingress external IP/hostname once Phase 8 is applied, then redeploy this
-    api-config. Until then, API Gateway responds on its own default URL but
-    cannot reach any backend.
+    patient-service via the GKE Ingress at 136.69.124.190. x-google-backend
+    rejects bare IP addresses ("cannot route requests by IP Address"), so
+    the address uses nip.io (136.69.124.190.nip.io), a free public DNS
+    service that resolves <ip>.nip.io straight to the embedded IP - no
+    domain purchase or DNS zone needed. If the Ingress IP ever changes
+    (e.g. the Ingress is recreated), update the .nip.io hostname in all
+    three x-google-backend.address values here and redeploy this api-config.
   version: 1.0.0
 schemes:
   - https
@@ -21,7 +22,7 @@ paths:
       summary: Create an order (order-service)
       operationId: createOrder
       x-google-backend:
-        address: https://placeholder-backend.invalid
+        address: http://136.69.124.190.nip.io
       parameters:
         - in: body
           name: body
@@ -42,7 +43,7 @@ paths:
       summary: Schedule an appointment (application-service)
       operationId: createAppointment
       x-google-backend:
-        address: https://placeholder-backend.invalid
+        address: http://136.69.124.190.nip.io
       parameters:
         - in: body
           name: body
@@ -72,7 +73,7 @@ paths:
       summary: Add a patient (patient-service)
       operationId: createPatient
       x-google-backend:
-        address: https://placeholder-backend.invalid
+        address: http://136.69.124.190.nip.io
       parameters:
         - in: body
           name: body
