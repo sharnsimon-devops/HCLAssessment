@@ -1,4 +1,4 @@
-name: Build and Push
+name: Build, Push, and Deploy
 
 on:
   push:
@@ -15,6 +15,9 @@ env:
   REPO: dev-docker-repo
   KEYRING: dev-binauthz-keyring
   SIGNING_KEY: dev-attestor-signing-key
+  CLUSTER: dev-gke-cluster
+  FLEET_MEMBERSHIP: dev-gke-membership
+  NAMESPACE: dev
 
 permissions:
   contents: read
@@ -41,7 +44,7 @@ jobs:
               - 'patient-service/**'
 
   order-service:
-    name: Build order-service
+    name: Build, push, and deploy order-service
     needs: detect-changes
     if: needs.detect-changes.outputs.order-service == 'true'
     runs-on: ubuntu-latest
@@ -104,8 +107,23 @@ jobs:
             --keyversion-key=${{ env.SIGNING_KEY }} \
             --keyversion=1
 
+      - name: Update manifest image
+        run: sed -i "s|image: .*|image: ${{ steps.digest.outputs.digest }}|" k8s/order-service/deployment.yaml
+
+      - uses: google-github-actions/get-gke-credentials@v3
+        with:
+          cluster_name: ${{ env.CLUSTER }}
+          location: ${{ env.REGION }}
+          use_connect_gateway: true
+          fleet_membership_name: ${{ env.FLEET_MEMBERSHIP }}
+
+      - name: Apply and wait for rollout
+        run: |
+          kubectl apply -f k8s/order-service/deployment.yaml
+          kubectl rollout status deployment/order-service -n ${{ env.NAMESPACE }} --timeout=180s
+
   application-service:
-    name: Build application-service
+    name: Build, push, and deploy application-service
     needs: detect-changes
     if: needs.detect-changes.outputs.application-service == 'true'
     runs-on: ubuntu-latest
@@ -168,8 +186,23 @@ jobs:
             --keyversion-key=${{ env.SIGNING_KEY }} \
             --keyversion=1
 
+      - name: Update manifest image
+        run: sed -i "s|image: .*|image: ${{ steps.digest.outputs.digest }}|" k8s/application-service/deployment.yaml
+
+      - uses: google-github-actions/get-gke-credentials@v3
+        with:
+          cluster_name: ${{ env.CLUSTER }}
+          location: ${{ env.REGION }}
+          use_connect_gateway: true
+          fleet_membership_name: ${{ env.FLEET_MEMBERSHIP }}
+
+      - name: Apply and wait for rollout
+        run: |
+          kubectl apply -f k8s/application-service/deployment.yaml
+          kubectl rollout status deployment/application-service -n ${{ env.NAMESPACE }} --timeout=180s
+
   patient-service:
-    name: Build patient-service
+    name: Build, push, and deploy patient-service
     needs: detect-changes
     if: needs.detect-changes.outputs.patient-service == 'true'
     runs-on: ubuntu-latest
@@ -231,3 +264,18 @@ jobs:
             --keyversion-keyring=${{ env.KEYRING }} \
             --keyversion-key=${{ env.SIGNING_KEY }} \
             --keyversion=1
+
+      - name: Update manifest image
+        run: sed -i "s|image: .*|image: ${{ steps.digest.outputs.digest }}|" k8s/patient-service/deployment.yaml
+
+      - uses: google-github-actions/get-gke-credentials@v3
+        with:
+          cluster_name: ${{ env.CLUSTER }}
+          location: ${{ env.REGION }}
+          use_connect_gateway: true
+          fleet_membership_name: ${{ env.FLEET_MEMBERSHIP }}
+
+      - name: Apply and wait for rollout
+        run: |
+          kubectl apply -f k8s/patient-service/deployment.yaml
+          kubectl rollout status deployment/patient-service -n ${{ env.NAMESPACE }} --timeout=180s
