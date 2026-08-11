@@ -22,3 +22,9 @@ variable "gke_master_cidr" {
   default     = "172.16.0.16/28"
 }
 
+variable "master_authorized_cidr" {
+  description = "Source CIDR allowed to reach the GKE master's public API endpoint (kubectl access). Update this if your public IP changes."
+  type        = string
+  default     = "148.252.145.227/32"
+}
+

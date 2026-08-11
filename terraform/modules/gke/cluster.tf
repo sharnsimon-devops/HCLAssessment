@@ -19,6 +19,13 @@ resource "google_container_cluster" "primary" {
     master_ipv4_cidr_block  = var.gke_master_cidr
   }
 
+  master_authorized_networks_config {
+    cidr_blocks {
+      cidr_block   = var.master_authorized_cidr
+      display_name = "admin-workstation"
+    }
+  }
+
   workload_identity_config {
     workload_pool = "${var.project_id}.svc.id.goog"
   }

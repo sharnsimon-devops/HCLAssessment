@@ -38,6 +38,11 @@ variable "gke_master_cidr" {
   type        = string
 }
 
+variable "master_authorized_cidr" {
+  description = "Source CIDR allowed to reach the GKE master's public API endpoint"
+  type        = string
+}
+
 variable "gke_node_sa_email" {
   description = "Email of the least-privilege GKE node service account"
   type        = string
