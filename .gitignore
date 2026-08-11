@@ -2,3 +2,27 @@
 .class*
 .jar
 .ear
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+*.tfplan
+tfplan
+
+# Node
+node_modules/
+
+# Maven
+target/
+
+# Secrets / local env
+.env
+*.pem
+*-key.json

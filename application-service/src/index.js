@@ -1,8 +1,17 @@
 const express = require('express');
+    const client = require('prom-client');
     const app = express();
     const port = process.env.PORT || 3001;
-    
+
+    const register = new client.Registry();
+    client.collectDefaultMetrics({ register });
+
     app.use(express.json());
+
+    app.get('/metrics', async (req, res) => {
+      res.set('Content-Type', register.contentType);
+      res.end(await register.metrics());
+    });
     
     // In-memory data store (replace with a database in a real application)
     let appointments = [
