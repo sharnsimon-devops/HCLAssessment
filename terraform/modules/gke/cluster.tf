@@ -36,8 +36,12 @@ resource "google_container_cluster" "primary" {
   remove_default_node_pool = true
   initial_node_count       = 1
 
-  # Binary Authorization intentionally left unset here - enabled in Phase 10,
-  # after a normal deploy has been proven to work.
+  # Phase 10: enforcement enabled now that a normal deploy has been proven
+  # to work (Phase 8) and both attestors have a valid signed attestation
+  # for order-service:v1 ready to prove the enforce/block behavior.
+  binary_authorization {
+    evaluation_mode = "PROJECT_SINGLETON_POLICY_ENFORCE"
+  }
 
   deletion_protection = false
 }
