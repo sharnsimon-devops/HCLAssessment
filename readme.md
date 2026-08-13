@@ -137,12 +137,6 @@ Setup: three APIs enabled (`gkeconnect`, `gkehub`, `connectgateway`), a `google_
 
 - **Logging**: `SYSTEM_COMPONENTS` and `WORKLOADS`, so application pod logs (stdout/stderr) are collected. This is GKE's own default. I never had to configure it explicitly.
 - **Monitoring**: a comprehensive component list (`POD`, `DEPLOYMENT`, `STATEFULSET`, `DAEMONSET`, `CADVISOR`, `KUBELET`, `STORAGE`, `HPA`, `JOBSET`), plus Google Cloud Managed Service for Prometheus enabled. Also GKE's own default.
-- **Alerting** is real, Terraform-managed infrastructure I actually built, not a default. One email notification channel (`sharnspectre2002@gmail.com`) plus two log-based alert policies:
-  - Cloud Armor `DENY` events, i.e. real attack attempts being blocked.
-  - Project-level `SetIamPolicy` calls, i.e. IAM policy changes.
-  - Both use `condition_matched_log`, so no separate log-based metric resource is needed, with a 5-minute notification rate limit.
-  - Verification status is genuinely ambiguous through the API (the field is just absent either way). The Console's Notification Channels page showed no "Verify" option, which is itself a signal it's already verified, but I never got 100% definitive confirmation. It would take a real alert firing to be fully sure.
-- **Not built yet**: alerts for Binary Authorization denials or GKE control-plane auth failures. The log filters for those need verification against real docs before building, same discipline as the two that did get built. This is flagged as a next step, not done.
 
 ---
 
