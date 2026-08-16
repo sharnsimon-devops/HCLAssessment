@@ -150,8 +150,6 @@ Every item here was a deliberate decision, documented so it isn't mistaken for a
 | No DAST, no Cloud Armor Adaptive Protection | DAST needs SCC Web Security Scanner, which needs SCC Premium, which needs an org. Adaptive Protection is an Enterprise-tier paid feature. | Both blocked by the same no-org constraint as SCC. |
 | Secret Manager CSI never built | None of the 3 services hold a real secret worth protecting. `order-service` uses in-memory H2; the Node services are stateless. | Deliberate scope decision. |
 
-**Bottom line**: for a demo or portfolio DevSecOps pipeline, this is comprehensive defense-in-depth across network, identity, supply chain, and runtime layers. For an actual production system handling real patient data (PHI/PII), it would still need SCC or an equivalent (requires an org), a formal risk assessment, a BAA with Google, and real incident-response processes. Several of those are legal or business requirements that infrastructure code alone can't produce.
-
 ---
 
 ## Operational notes
